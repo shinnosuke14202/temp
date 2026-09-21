@@ -1,0 +1,52 @@
+In server 
+-> add 
+[mysqld]
+port=3306
+server-id=1
+log_bin=mysql-bin
+binlog_format=ROW
+-> create an user with slave ip
+-> 	
+
+
+CREATE USER 'repl'@'192.168.56.10'
+IDENTIFIED BY 'repl_password';
+
+GRANT REPLICATION SLAVE
+ON *.*
+TO 'repl'@'192.168.56.10';
+
+FLUSH PRIVILEGES;
+
+FLUSH TABLES WITH READ LOCK;
+
+SHOW MASTER STATUS;
+
+| CROW-bin.000004 |      881 
+
+
+mysqldump -u root -p --databases books --source-data=2 > books.sql
+
+scp -i D:/vagrant-vms/ubuntu/.vagrant/machines/default/virtualbox/private_key books.sql vagrant@192.168.56.10:/home/vagrant/
+
+
+[mysqld]
+server-id=2
+relay-log=relay-bin
+
+CHANGE REPLICATION SOURCE TO
+    SOURCE_HOST='192.168.56.1',
+    SOURCE_PORT=3306,
+    SOURCE_USER='repl',
+    SOURCE_PASSWORD='1',
+    SOURCE_LOG_FILE='CROW-bin.000004',
+    SOURCE_LOG_POS=881;
+
+START REPLICA;
+
+SHOW REPLICA STATUS\G;
+
+
+netsh advfirewall firewall add rule name="MySQL 3306" dir=in action=allow protocol=TCP localport=3306
+
+netsh advfirewall firewall set rule name="MySQL 3306" new enable=no
