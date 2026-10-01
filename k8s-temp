@@ -1,0 +1,145 @@
+sudo usermod -aG docker vagrant
+
+-------------------------------------------------------------
+
+docker pull ubuntu
+
+docker run nginx
+
+docker start <cId>
+
+docker run -d -p 8080:80 --name web-server nginx
+
+docker stop/ kill web-server
+
+docker stop $(docker ps -q)
+
+docker exec -it bd11e8751a1a /bin/bash
+
+-------------------------------------------------------------
+
+docker images
+
+docker logs <cId>
+
+docker logs -f/--follow <cId> 
+
+docker ps/ ps -a
+
+docker --filter name=
+
+docker rm <cId> / <name>
+
+docker rm $(docker ps -aq)
+
+-------------------------------------------------------------
+
+kubectl get pods
+
+kubectl get services
+
+kubectl run nginx-pod --image nginx:1.27.0
+
+kubectl delete pod nginx-pod
+
+kubectl expose pod nginx-pod --type=NodePort --port=80
+
+kubectl create -f nginx-pod.yaml
+
+kubectl describe pod nginx-pod
+
+kubectl logs nginx-pod
+
+kubectl get nodes -o wide
+
+kubectl edit service nginx-service
+
+kubectl run alpine --image=alpine --dry-run=client -o yaml
+
+kubectl apply -f nginx-pod.yaml
+
+kubectl apply -f ./object-management (contain multiple config files)
+	pod/nginx-pod created
+	service/nginx-service unchanged
+
+kubectl get config view
+
+kubectl get clusterrolebinding cluster-admin -o yaml
+
+openssl x509 -noout -text -in '/home/vagrant/.minikube/profiles/
+minikube/client.crt'
+
+-------------------------------------------------------------
+
+openssl genrsa -out bob.key 2048
+
+openssl req -new -key bob.key -out bob.csr -subj "/CN=bob/O=dev"
+
+cat bob.csr | base64 | tr -d "\n"
+
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: bob
+spec:
+  request: <base64-...>
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400
+  usages:
+  - client auth
+
+kubectl apply -f csr.yaml
+
+kubectl get certificatesigningrequest
+
+kubectl certificate approve alice bob
+
+kubectl get csr bob -o jsonpath='{.status.certificate}' | base64 -d > bob.crt
+
+kubectl config set-context bob --cluster minikube --user bob
+
+kubectl config set-credentials bob --client-key $(realpath
+ bob.key) --client-certificate $(realpath bob.crt)
+
+kubectl config use-context minikube
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: dev
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+kubectl apply -f dev-pod-reader.yaml
+
+kubectl get role -n dev
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader
+  namespace: dev
+subjects:
+- kind: User
+  name: bob
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+kubectl apply -f dev-pod-read-rb.yaml 
+
+kubectl get pods -n dev
+
+-------------------------------------------------------------
+
+https://github.com/antonputra/tutorials/tree/main/lessons/188
+
+
+
+
+
